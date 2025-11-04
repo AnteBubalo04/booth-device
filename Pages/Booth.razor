@@ -3,10 +3,15 @@
 @inject IJSRuntime JS
 @namespace Booth.Pages
 
-@if (!triggered)
+@if (!triggered && !thankYou)
 {
     <h3>Scan QR code</h3>
-    <img src="https://api.qrserver.com/v1/create-qr-code/?data=https://localhost:7254/session/@SessionId&size=200x200" />
+    <img src="https://api.qrserver.com/v1/create-qr-code/?data=https://landinggggggggg.netlify.app/session/@SessionId&size=200x200" />
+}
+else if (thankYou)
+{
+    <h2>Hvala na korištenju XFrame!</h2>
+    <p>Fotka je uspješno poslana.</p>
 }
 else
 {
@@ -19,32 +24,18 @@ else
 @code {
     [Parameter] public string SessionId { get; set; }
     private bool triggered = false;
+    private bool thankYou = false;
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
-        await CheckSessionAndStart();
-    }
-
-    private async Task CheckSessionAndStart()
-    {
-        var result = await Http.GetAsync($"https://localhost:5001/api/session/{SessionId}");
-        if (result.IsSuccessStatusCode)
-        {
-            triggered = true;
-            StateHasChanged();
-            await JS.InvokeVoidAsync("startCameraWithCountdown", SessionId);
-        }
-        else
-        {
-            _ = Task.Run(PollSession);
-        }
+        _ = Task.Run(PollSession); // ne pokreće kameru odmah
     }
 
     private async Task PollSession()
     {
         while (!triggered)
         {
-            var result = await Http.GetAsync($"https://localhost:5001/api/session/{SessionId}");
+            var result = await Http.GetAsync($"https://booth-api-d0el.onrender.com/api/session/{SessionId}");
             if (result.IsSuccessStatusCode)
             {
                 triggered = true;
@@ -53,5 +44,20 @@ else
             }
             await Task.Delay(3000);
         }
+    }
+
+    [JSInvokable("ShowThankYouAndReset")]
+    public async Task ShowThankYouAndReset()
+    {
+        thankYou = true;
+        StateHasChanged();
+
+        await Task.Delay(5000); // 5 sekundi zahvale
+
+        triggered = false;
+        thankYou = false;
+        StateHasChanged();
+
+        _ = Task.Run(PollSession); // ponovno čekaj novi session
     }
 }
