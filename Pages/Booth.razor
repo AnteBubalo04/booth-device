@@ -1,0 +1,57 @@
+﻿@page "/booth/{SessionId}"
+@inject HttpClient Http
+@inject IJSRuntime JS
+@namespace Booth.Pages
+
+@if (!triggered)
+{
+    <h3>Scan QR code</h3>
+    <img src="https://api.qrserver.com/v1/create-qr-code/?data=https://localhost:7254/session/@SessionId&size=200x200" />
+}
+else
+{
+    <h3>Smile! 📸</h3>
+    <div id="countdown" style="font-size: 48px;"></div>
+    <video id="video" autoplay playsinline></video>
+    <canvas id="canvas" style="display:none;"></canvas>
+}
+
+@code {
+    [Parameter] public string SessionId { get; set; }
+    private bool triggered = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CheckSessionAndStart();
+    }
+
+    private async Task CheckSessionAndStart()
+    {
+        var result = await Http.GetAsync($"https://localhost:5001/api/session/{SessionId}");
+        if (result.IsSuccessStatusCode)
+        {
+            triggered = true;
+            StateHasChanged();
+            await JS.InvokeVoidAsync("startCameraWithCountdown", SessionId);
+        }
+        else
+        {
+            _ = Task.Run(PollSession);
+        }
+    }
+
+    private async Task PollSession()
+    {
+        while (!triggered)
+        {
+            var result = await Http.GetAsync($"https://localhost:5001/api/session/{SessionId}");
+            if (result.IsSuccessStatusCode)
+            {
+                triggered = true;
+                StateHasChanged();
+                await JS.InvokeVoidAsync("startCameraWithCountdown", SessionId);
+            }
+            await Task.Delay(3000);
+        }
+    }
+}
