@@ -1,4 +1,6 @@
-﻿window.startCameraWithCountdown = async (sessionId) => {
+﻿const apiBase = "https://booth-api-d0el.onrender.com";
+
+window.startCameraWithCountdown = async (sessionId) => {
     const video = document.getElementById('video');
     const countdown = document.getElementById('countdown');
     const canvas = document.getElementById('canvas');
@@ -34,13 +36,12 @@ function takePhoto(sessionId) {
         ctx.drawImage(overlay, 0, 0, canvas.width, canvas.height);
 
         // 📸 Draw camera feed inside the target square
-        const photoX = 150;         // X pozicija kvadrata
-        const photoY = 500;         // Y pozicija kvadrata
-        const photoWidth = 800;     // širina kvadrata
-        const photoHeight = 800;    // visina kvadrata
+        const photoX = 150;
+        const photoY = 500;
+        const photoWidth = 800;
+        const photoHeight = 800;
 
         ctx.drawImage(video, photoX, photoY, photoWidth, photoHeight);
-
 
         // 📤 Upload photo to backend
         canvas.toBlob(async (blob) => {
@@ -48,7 +49,7 @@ function takePhoto(sessionId) {
             formData.append("photo", blob, "photo.jpg");
 
             try {
-                const response = await fetch(`https://localhost:5001/api/session/${sessionId}/photo`, {
+                const response = await fetch(`${apiBase}/api/session/${sessionId}/photo`, {
                     method: "POST",
                     body: formData
                 });
@@ -59,6 +60,8 @@ function takePhoto(sessionId) {
                 } else {
                     console.log("Photo uploaded successfully.");
 
+                    // ✅ Pozovi Blazor metodu za zahvalu i reset
+                    DotNet.invokeMethodAsync("Booth", "ShowThankYouAndReset");
                 }
             } catch (err) {
                 console.error("Fetch exception:", err);
