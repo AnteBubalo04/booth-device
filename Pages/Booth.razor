@@ -35,13 +35,21 @@ else
     {
         while (!triggered)
         {
-            var result = await Http.GetAsync($"https://booth-api-d0el.onrender.com/api/session/{SessionId}");
-            if (result.IsSuccessStatusCode)
+            try
             {
-                triggered = true;
-                StateHasChanged();
-                await JS.InvokeVoidAsync("startCameraWithCountdown", SessionId);
+                var result = await Http.GetAsync($"https://booth-api-d0el.onrender.com/api/session/{SessionId}");
+                if (result.IsSuccessStatusCode)
+                {
+                    triggered = true;
+                    StateHasChanged();
+                    await JS.InvokeVoidAsync("startCameraWithCountdown", SessionId);
+                }
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Polling error: {ex.Message}");
+            }
+
             await Task.Delay(3000);
         }
     }
