@@ -1,2 +1,1 @@
-C:\Users\Ante\Desktop\Pixie\BoothSolution\Booth.Device\wwwroot\manifest.json
 C:\Users\Ante\Desktop\Pixie\BoothSolution\Booth.Device\wwwroot\service-worker.js
